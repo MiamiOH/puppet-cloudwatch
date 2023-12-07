@@ -133,44 +133,54 @@ class cloudwatch (
   $manage_dependencies     = true
 ) {
 
-  $install_dir = "${install_target}/aws-scripts-mon"
-  $zip_name    = 'CloudWatchMonitoringScripts-1.2.2.zip'
-  $zip_url     = "http://aws-cloudwatch.s3.amazonaws.com/downloads/${zip_name}"
-
-  if $manage_dependencies {
-    # Establish which packages are needed, depending on the OS family
-    case $::operatingsystem {
-      /(RedHat|CentOS|OracleLinux)$/: {
-        $packages = ['perl-Switch', 'perl-DateTime', 'perl-Sys-Syslog', 'perl-LWP-Protocol-https', 'perl-Digest-SHA', 'unzip', 'cronie']
+  if $facts['os']['name'] == 'OracleLinux': {
+      if versioncmp($facts['os']['release']['major'], '8') >= 0 {
+        package { 'amazon-cloudwatch-agent':
+          ensure   => present,
+          provider => rpm,
+          source   => 'https://amazoncloudwatch-agent.s3.amazonaws.com/oracle_linux/amd64/latest/amazon-cloudwatch-agent.rpm',
+        }
       }
-      'Amazon': {
-        $packages = ['perl-Switch', 'perl-DateTime', 'perl-Sys-Syslog', 'perl-LWP-Protocol-https', 'unzip', 'cronie']
-      }
-      /(Ubuntu|Debian)$/: {
-        $packages = ['libwww-perl', 'libdatetime-perl', 'unzip', 'cronie']
-      }
-      default: {
-        fail("Dependency management for module cloudwatch is not supported on ${::operatingsystem}")
-      }
-    }
-
-    ensure_packages($packages)
-
-    archive { $zip_name:
-      path         => "/tmp/${zip_name}",
-      extract      => true,
-      extract_path => $install_target,
-      source       => $zip_url,
-      creates      => $install_dir,
-      require      => Package[$packages]
-    }
   } else {
-    archive { $zip_name:
-      path         => "/tmp/${zip_name}",
-      extract      => true,
-      extract_path => $install_target,
-      source       => $zip_url,
-      creates      => $install_dir
+    $install_dir = "${install_target}/aws-scripts-mon"
+    $zip_name    = 'CloudWatchMonitoringScripts-1.2.2.zip'
+    $zip_url     = "http://aws-cloudwatch.s3.amazonaws.com/downloads/${zip_name}"
+
+    if $manage_dependencies {
+      # Establish which packages are needed, depending on the OS family
+      case $::operatingsystem {
+        /(RedHat|CentOS|OracleLinux)$/: {
+          $packages = ['perl-Switch', 'perl-DateTime', 'perl-Sys-Syslog', 'perl-LWP-Protocol-https', 'perl-Digest-SHA', 'unzip', 'cronie']
+        }
+        'Amazon': {
+          $packages = ['perl-Switch', 'perl-DateTime', 'perl-Sys-Syslog', 'perl-LWP-Protocol-https', 'unzip', 'cronie']
+        }
+        /(Ubuntu|Debian)$/: {
+          $packages = ['libwww-perl', 'libdatetime-perl', 'unzip', 'cronie']
+        }
+        default: {
+          fail("Dependency management for module cloudwatch is not supported on ${::operatingsystem}")
+        }
+      }
+
+      ensure_packages($packages)
+
+      archive { $zip_name:
+        path         => "/tmp/${zip_name}",
+        extract      => true,
+        extract_path => $install_target,
+        source       => $zip_url,
+        creates      => $install_dir,
+        require      => Package[$packages]
+      }
+    } else {
+      archive { $zip_name:
+        path         => "/tmp/${zip_name}",
+        extract      => true,
+        extract_path => $install_target,
+        source       => $zip_url,
+        creates      => $install_dir
+      }
     }
   }
 
