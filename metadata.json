@@ -13,6 +13,10 @@
       "operatingsystemrelease":[ "7.0" ]
     },
     {
+      "operatingsystem":"Rocky",
+      "operatingsystemrelease":[ "8.0" ]
+    },
+    {
       "operatingsystem":"CentOS",
       "operatingsystemrelease":[ "7.0" ]
     },
