@@ -5,7 +5,7 @@
 # monitoring information to Cloudwatch.
 #
 # Read more about AWS Cloudwatch Monitoring Scripts:
-#   http://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/mon-scripts.html
+#   https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Install-CloudWatch-Monitoring-Scripts.html
 #
 # == Parameters
 #
@@ -109,48 +109,72 @@
 # Copyright 2018 Joe Nyland, unless otherwise noted.
 #
 class cloudwatch (
-  $access_key              = undef,
-  $secret_key              = undef,
-  $credential_file         = undef,
-  $iam_role                = undef,
-  $enable_mem_util         = true,
-  $enable_mem_used         = true,
-  $enable_mem_avail        = true,
-  $enable_swap_util        = true,
-  $enable_swap_used        = true,
-  $disk_path               = ['/'],
-  $enable_disk_space_util  = true,
-  $enable_disk_space_used  = true,
-  $enable_disk_space_avail = true,
-  $memory_units            = 'megabytes',
-  $disk_space_units        = 'gigabytes',
-  $aggregated              = false,
-  $aggregated_only         = false,
-  $auto_scaling            = false,
-  $auto_scaling_only       = false,
-  $cron_min                = '*',
-  $install_target          = '/opt',
-  $manage_dependencies     = true
+  Optional[String] $access_key              = undef,
+  Optional[String] $secret_key              = undef,
+  Optional[String] $credential_file         = undef,
+  Optional[String] $iam_role                = undef,
+  Boolean $enable_mem_util                  = true,
+  Boolean $enable_mem_used                  = true,
+  Boolean $enable_mem_avail                 = true,
+  Boolean $enable_swap_util                 = true,
+  Boolean $enable_swap_used                 = true,
+  Array[String] $disk_path                  = ['/'],
+  Boolean $enable_disk_space_util           = true,
+  Boolean $enable_disk_space_used           = true,
+  Boolean $enable_disk_space_avail          = true,
+  String $memory_units                      = 'megabytes',
+  String $disk_space_units                  = 'gigabytes',
+  Boolean $aggregated                       = false,
+  Boolean $aggregated_only                  = false,
+  Boolean $auto_scaling                     = false,
+  Boolean $auto_scaling_only                = false,
+  String $cron_min                          = '*',
+  String $install_target                    = '/opt',
+  Boolean $manage_dependencies              = true,
 ) {
-
   $install_dir = "${install_target}/aws-scripts-mon"
   $zip_name    = 'CloudWatchMonitoringScripts-1.2.2.zip'
   $zip_url     = "https://aws-cloudwatch.s3.amazonaws.com/downloads/${zip_name}"
 
   if $manage_dependencies {
     # Establish which packages are needed, depending on the OS family
-    case $::operatingsystem {
-      /(RedHat|CentOS|OracleLinux|Rocky)$/: {
-        $packages = ['perl-Switch', 'perl-DateTime', 'perl-Sys-Syslog', 'perl-LWP-Protocol-https', 'perl-Digest-SHA', 'unzip', 'cronie']
+    case $facts['os']['family'] {
+      'RedHat': {
+        $packages = [
+          'perl-Switch',
+          'perl-DateTime',
+          'perl-Sys-Syslog',
+          'perl-LWP-Protocol-https',
+          'perl-Digest-SHA',
+          'unzip',
+          'cronie',
+        ]
       }
+
       'Amazon': {
-        $packages = ['perl-Switch', 'perl-DateTime', 'perl-Sys-Syslog', 'perl-LWP-Protocol-https', 'unzip', 'cronie']
+        $packages = [
+          'perl-Switch',
+          'perl-DateTime',
+          'perl-Sys-Syslog',
+          'perl-LWP-Protocol-https',
+          'unzip',
+          'cronie',
+        ]
       }
-      /(Ubuntu|Debian)$/: {
-        $packages = ['libwww-perl', 'libdatetime-perl', 'unzip', 'cronie']
+
+      'Debian': {
+        $packages = [
+          'libwww-perl',
+          'libdatetime-perl',
+          'unzip',
+          'cronie',
+        ]
       }
+
       default: {
-        fail("Dependency management for module cloudwatch is not supported on ${::operatingsystem}")
+        fail(
+          "Dependency management for module cloudwatch is not supported on ${facts['os']['name']}"
+        )
       }
     }
 
@@ -162,7 +186,7 @@ class cloudwatch (
       extract_path => $install_target,
       source       => $zip_url,
       creates      => $install_dir,
-      require      => Package[$packages]
+      require      => Package[$packages],
     }
   } else {
     archive { $zip_name:
@@ -170,29 +194,47 @@ class cloudwatch (
       extract      => true,
       extract_path => $install_target,
       source       => $zip_url,
-      creates      => $install_dir
+      creates      => $install_dir,
     }
   }
 
-  if $access_key and $secret_key {
-    if $credential_file { fail('$access_key and $secret_key cannot be used with $credential_file') }
-    if $iam_role { fail('$access_key and $secret_key cannot be used with $iam_role') }
+  if ($access_key != undef) and ($secret_key != undef) {
+    if $credential_file {
+      fail('$access_key and $secret_key cannot be used with $credential_file')
+    }
+
+    if $iam_role {
+      fail('$access_key and $secret_key cannot be used with $iam_role')
+    }
+
     $credentials = "--aws-access-key-id=${access_key} --aws-secret-key=${secret_key}"
   } else {
     $credentials = ''
   }
 
   if $credential_file {
-    if $access_key and $secret_key { fail('$credential_file cannot be used with $access_key and $secret_key') }
-    if $iam_role { fail('$credential_file cannot be used with $iam_role') }
+    if ($access_key != undef) and ($secret_key != undef) {
+      fail('$credential_file cannot be used with $access_key and $secret_key')
+    }
+
+    if $iam_role {
+      fail('$credential_file cannot be used with $iam_role')
+    }
+
     $creds_path = "--aws-credential-file=${credential_file}"
   } else {
     $creds_path = ''
   }
 
   if $iam_role {
-    if $access_key and $secret_key { fail('$iam_role cannot be used with $access_key and $secret_key') }
-    if $credential_file { fail('$iam_role cannot be used with $credential_file') }
+    if ($access_key != undef) and ($secret_key != undef) {
+      fail('$iam_role cannot be used with $access_key and $secret_key')
+    }
+
+    if $credential_file {
+      fail('$iam_role cannot be used with $credential_file')
+    }
+
     $iam_role_val = "--aws-iam-role=${iam_role}"
   } else {
     $iam_role_val = ''
@@ -230,7 +272,9 @@ class cloudwatch (
 
   $memory_units_val = "--memory-units=${memory_units}"
 
-  $disk_path_val = rstrip(inline_template('<% @disk_path.each do |path| -%>--disk-path=<%=path%> <%end-%>'))
+  $disk_path_val = $disk_path.map |$path| {
+    "--disk-path=${path}"
+  }.join(' ')
 
   if $enable_disk_space_util {
     $disk_space_util_val = '--disk-space-util'
@@ -272,13 +316,32 @@ class cloudwatch (
     $auto_scaling_val = ''
   }
 
-  $cmd = "${install_dir}/mon-put-instance-data.pl
-          --from-cron ${memory_units_val} ${disk_space_units_val} ${creds_path} ${credentials} ${iam_role_val}
-          ${mem_util} ${mem_used} ${mem_avail} ${swap_util} ${swap_used}
-          ${disk_path_val} ${disk_space_util_val} ${disk_space_used_val} ${disk_space_avail_val}
-          ${aggregated_val} ${auto_scaling_val}"
+  $cmd_parts = [
+    "${install_dir}/mon-put-instance-data.pl",
+    '--from-cron',
+    $memory_units_val,
+    $disk_space_units_val,
+    $creds_path,
+    $credentials,
+    $iam_role_val,
+    $mem_util,
+    $mem_used,
+    $mem_avail,
+    $swap_util,
+    $swap_used,
+    $disk_path_val,
+    $disk_space_util_val,
+    $disk_space_used_val,
+    $disk_space_avail_val,
+    $aggregated_val,
+    $auto_scaling_val,
+  ]
 
-  if ($manage_dependencies) {
+  $cmd = $cmd_parts.filter |$value| {
+    $value != ''
+  }.join(' ')
+
+  if $manage_dependencies {
     cron { 'cloudwatch':
       ensure   => present,
       name     => 'Push extra metrics to Cloudwatch',
@@ -287,11 +350,11 @@ class cloudwatch (
       monthday => '*',
       month    => '*',
       weekday  => '*',
-      command  => regsubst($cmd, '\s+', ' ', 'G'),
+      command  => $cmd,
       require  => [
         Archive[$zip_name],
-        Package[$packages]
-      ]
+        Package[$packages],
+      ],
     }
   } else {
     cron { 'cloudwatch':
@@ -302,8 +365,8 @@ class cloudwatch (
       monthday => '*',
       month    => '*',
       weekday  => '*',
-      command  => regsubst($cmd, '\s+', ' ', 'G'),
-      require  => Archive[$zip_name]
+      command  => $cmd,
+      require  => Archive[$zip_name],
     }
   }
 }

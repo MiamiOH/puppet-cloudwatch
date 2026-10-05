@@ -1,42 +1,87 @@
 {
-  "name": "MasterRoot24-cloudwatch",
-  "version": "0.5.1",
+  "name": "masterroot24-cloudwatch",
+  "version": "0.6.0",
   "author": "Joe Nyland",
-  "summary": "Installs AWS Cloudwatch advanced metrics",
+  "summary": "Installs AWS CloudWatch advanced metrics",
   "license": "MIT",
   "source": "https://github.com/JoeNyland/puppet-cloudwatch",
   "project_page": "https://github.com/JoeNyland/puppet-cloudwatch",
   "issues_url": "https://github.com/JoeNyland/puppet-cloudwatch/issues",
   "operatingsystem_support": [
     {
-      "operatingsystem":"RedHat",
-      "operatingsystemrelease":[ "7.0" ]
+      "operatingsystem": "RedHat",
+      "operatingsystemrelease": [
+        "7.0",
+        "8.0",
+        "9.0"
+      ]
     },
     {
-      "operatingsystem":"Rocky",
-      "operatingsystemrelease":[ "8.0" ]
+      "operatingsystem": "Rocky",
+      "operatingsystemrelease": [
+        "8.0",
+        "9.0"
+      ]
     },
     {
-      "operatingsystem":"CentOS",
-      "operatingsystemrelease":[ "7.0" ]
+      "operatingsystem": "CentOS",
+      "operatingsystemrelease": [
+        "7.0",
+        "8.0"
+      ]
     },
     {
-      "operatingsystem":"Amazon",
-      "operatingsystemrelease":[ "2016.09", "2017.09" ]
+      "operatingsystem": "Amazon",
+      "operatingsystemrelease": [
+        "2016.09",
+        "2017.09",
+        "2",
+        "2023"
+      ]
     },
     {
-      "operatingsystem":"Ubuntu",
-      "operatingsystemrelease":[ "14.04", "16.04" ]
+      "operatingsystem": "Ubuntu",
+      "operatingsystemrelease": [
+        "14.04",
+        "16.04",
+        "18.04",
+        "20.04",
+        "22.04",
+        "24.04"
+      ]
     },
     {
-      "operatingsystem":"Debian",
-      "operatingsystemrelease":[ "7", "8", "9" ]
+      "operatingsystem": "Debian",
+      "operatingsystemrelease": [
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12"
+      ]
     }
   ],
-  "tags": [ "monitoring", "aws", "cloudwatch" ],
+  "tags": [
+    "monitoring",
+    "aws",
+    "cloudwatch"
+  ],
   "dependencies": [
-    {"name":"puppetlabs/stdlib","version_requirement":">= 1.0.0"},
-    {"name":"puppet/archive","version_requirement":">= 1.2.0 < 8.0.0"}
+    {
+      "name": "puppetlabs/stdlib",
+      "version_requirement": ">= 8.0.0 < 10.0.0"
+    },
+    {
+      "name": "puppet/archive",
+      "version_requirement": ">= 7.0.0 < 9.0.0"
+    }
+  ],
+  "requirements": [
+    {
+      "name": "puppet",
+      "version_requirement": ">= 7.0.0 < 9.0.0"
+    }
   ],
   "data_provider": null
 }
