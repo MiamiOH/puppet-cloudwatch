@@ -1,3 +1,9 @@
+## Release [1.0.0](https://github.com/JoeNyland/puppet-cloudwatch/releases/tag/1.0.0)
+
+* Modernize code
+* Add PDK 3.5.1
+* Update spec test
+
 ## Release [0.5.1](https://github.com/JoeNyland/puppet-cloudwatch/releases/tag/0.5.1)
 
 * No changes in this release
